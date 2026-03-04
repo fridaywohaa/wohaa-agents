@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mission Control v0.1</title>
+  <style>
+    :root{
+      --bg:#0b0c10; --card:#14161d; --muted:#9aa3b2; --text:#e7eaf0; --line:#2a2f3a;
+      --accent:#7c5cff; --good:#2dd4bf; --warn:#fbbf24;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Hiragino Sans", Arial, sans-serif;
+    }
+    body{margin:0; background:var(--bg); color:var(--text); font-family:var(--sans);}
+    .wrap{max-width:1100px; margin:0 auto; padding:22px 16px 60px;}
+    header{display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:14px;}
+    h1{font-size:18px; font-weight:650; margin:0; letter-spacing:.2px;}
+    .sub{color:var(--muted); font-size:12px;}
+
+    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:12px;}
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
+
+    .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px;}
+    .card h2{margin:0 0 10px 0; font-size:13px; color:var(--muted); font-weight:650; letter-spacing:.4px; text-transform:uppercase;}
+
+    .row{display:flex; gap:10px; flex-wrap:wrap;}
+    .pill{border:1px solid var(--line); border-radius:999px; padding:6px 10px; font-size:12px; color:var(--muted);}
+    .pill strong{color:var(--text); font-weight:700;}
+
+    .kpi{display:grid; grid-template-columns:1fr; gap:8px;}
+    .kpi .big{font-size:16px; font-weight:700;}
+    .kpi .small{color:var(--muted); font-size:12px; line-height:1.5;}
+
+    .news3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+    @media (max-width: 900px){ .news3{grid-template-columns:1fr;} }
+    .newsCol h3{margin:0 0 8px 0; font-size:12px; color:var(--text);}
+    .newsItem{border-top:1px dashed var(--line); padding-top:8px; margin-top:8px;}
+    .newsItem .t{font-size:13px; font-weight:650; margin-bottom:2px;}
+    .newsItem .s{font-size:12px; color:var(--muted); line-height:1.45;}
+
+    ul{margin:0; padding-left:18px;}
+    li{margin:6px 0;}
+
+    textarea, input{width:100%; background:#0e1016; color:var(--text); border:1px solid var(--line); border-radius:10px; padding:10px; font-family:var(--sans); font-size:13px; box-sizing:border-box;}
+    textarea{min-height:86px; resize:vertical;}
+    .formGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    @media (max-width: 900px){ .formGrid{grid-template-columns:1fr;} }
+
+    .btnRow{display:flex; gap:10px; justify-content:flex-end; margin-top:10px;}
+    button{background:var(--accent); color:white; border:0; padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer;}
+    button.secondary{background:transparent; border:1px solid var(--line); color:var(--text);}
+
+    .mono{font-family:var(--mono); font-size:12px; color:var(--muted);}
+    .ok{color:var(--good);} .w{color:var(--warn);}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Mission Control <span class="mono">v0.1</span></h1>
+        <div class="sub" id="dateLine">—</div>
+      </div>
+      <div class="row">
+        <div class="pill"><strong>Mode</strong> 一眼 + 晚間Review</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>出門卡</h2>
+          <div class="kpi">
+            <div class="big" id="wear">着衫：—</div>
+            <div class="big" id="umbrella">遮：—</div>
+            <div class="small" id="outdoorNote">—</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h2>世界發生咩事（每欄3條）</h2>
+          <div class="news3" id="news"></div>
+          <div class="mono" style="margin-top:10px;">提示：而家呢版係 skeleton，新聞位先用示例資料；之後再接 data source。</div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h2>今日行動（由昨晚生成）</h2>
+          <div class="row" style="margin-bottom:10px;">
+            <div class="pill"><strong>MIT</strong> <span id="mit">—</span></div>
+            <div class="pill"><strong>1%</strong> <span id="onePercent">—</span></div>
+            <div class="pill"><strong>訓練</strong> <span id="training">—</span></div>
+          </div>
+          <div>
+            <div class="sub" style="margin-bottom:6px;">Top 3</div>
+            <ul id="top3"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>晚間 Review（3分鐘版）</h2>
+          <div class="formGrid">
+            <div>
+              <div class="sub">今日3行（每行一句）</div>
+              <input id="sum1" placeholder="第1行" />
+              <div style="height:8px"></div>
+              <input id="sum2" placeholder="第2行" />
+              <div style="height:8px"></div>
+              <input id="sum3" placeholder="第3行" />
+            </div>
+            <div>
+              <div class="sub">反思</div>
+              <input id="didWell" placeholder="做得好：一句" />
+              <div style="height:8px"></div>
+              <input id="improveNext" placeholder="要改善：一句" />
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="sub">明日安排</div>
+          <input id="tomMit" placeholder="明日最重要 1 件（MIT）" />
+          <div style="height:8px"></div>
+          <input id="tomTop1" placeholder="明日 Top 3 - 1" />
+          <div style="height:8px"></div>
+          <input id="tomTop2" placeholder="明日 Top 3 - 2" />
+          <div style="height:8px"></div>
+          <input id="tomTop3" placeholder="明日 Top 3 - 3" />
+          <div style="height:8px"></div>
+          <input id="tomOne" placeholder="明日 1% 進步點（細到做得到）" />
+          <div style="height:8px"></div>
+          <input id="tomTrain" placeholder="明日 身體訓練（簡短）" />
+
+          <div class="btnRow">
+            <button class="secondary" id="btnLoad">Load last</button>
+            <button id="btnSave">Save + 生成今日行動</button>
+          </div>
+
+          <div class="mono" id="statusLine">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const KEY_REVIEW = 'mc:eveningReview:last';
+  const KEY_TODAY = 'mc:todayPlan:today';
+
+  const todayISO = new Date().toISOString().slice(0,10);
+  document.getElementById('dateLine').textContent = `Date: ${todayISO}`;
+
+  function getJSON(key, fallback){
+    try { return JSON.parse(localStorage.getItem(key) || '') || fallback; }
+    catch { return fallback; }
+  }
+  function setJSON(key, obj){
+    localStorage.setItem(key, JSON.stringify(obj));
+  }
+
+  // Backend sync (LAN/Tailscale)
+  async function backendGet(){
+    try{
+      const r = await fetch('/api/state', { cache:'no-store' });
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){
+      return null;
+    }
+  }
+  async function backendSet(state){
+    try{
+      const r = await fetch('/api/state', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(state)
+      });
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){
+      return null;
+    }
+  }
+
+  function renderNews(news){
+    const root = document.getElementById('news');
+    root.innerHTML = '';
+    const cols = [
+      {k:'hk', label:'香港'},
+      {k:'tech', label:'科技'},
+      {k:'world', label:'國際'}
+    ];
+    cols.forEach(c => {
+      const col = document.createElement('div');
+      col.className = 'newsCol';
+      const h = document.createElement('h3');
+      h.textContent = c.label;
+      col.appendChild(h);
+
+      const items = (news && news[c.k]) ? news[c.k] : [];
+      (items.length?items:[
+        {title:'（示例）待接入資料源', subtitle:'之後會用 gpt + web source 整合成 title + subtitle。'}
+      ]).slice(0,3).forEach(it => {
+        const item = document.createElement('div');
+        item.className = 'newsItem';
+        item.innerHTML = `<div class="t">${it.title||''}</div><div class="s">${it.subtitle||''}</div>`;
+        col.appendChild(item);
+      });
+
+      root.appendChild(col);
+    });
+  }
+
+  function renderToday(plan){
+    // Outdoor card placeholders for now
+    document.getElementById('wear').textContent = '着衫：' + (plan?.outdoorCard?.wear || '（待接入天氣）');
+    document.getElementById('umbrella').textContent = '遮：' + (plan?.outdoorCard?.umbrella || '（穩陣：帶摺遮）');
+    document.getElementById('outdoorNote').textContent = plan?.outdoorCard?.note || '提示：之後接入天氣後會自動生成。';
+
+    document.getElementById('mit').textContent = plan?.actions?.mit || '—';
+    document.getElementById('onePercent').textContent = plan?.actions?.onePercent || '—';
+    document.getElementById('training').textContent = plan?.actions?.training || '—';
+
+    const ul = document.getElementById('top3');
+    ul.innerHTML = '';
+    (plan?.actions?.top3 || []).filter(Boolean).forEach(t => {
+      const li = document.createElement('li');
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+
+    renderNews(plan?.news);
+  }
+
+  function fillForm(review){
+    document.getElementById('sum1').value = review?.todaySummary3Lines?.[0] || '';
+    document.getElementById('sum2').value = review?.todaySummary3Lines?.[1] || '';
+    document.getElementById('sum3').value = review?.todaySummary3Lines?.[2] || '';
+    document.getElementById('didWell').value = review?.reflection?.didWell || '';
+    document.getElementById('improveNext').value = review?.reflection?.improveNext || '';
+
+    document.getElementById('tomMit').value = review?.tomorrow?.mit || '';
+    document.getElementById('tomTop1').value = review?.tomorrow?.top3?.[0] || '';
+    document.getElementById('tomTop2').value = review?.tomorrow?.top3?.[1] || '';
+    document.getElementById('tomTop3').value = review?.tomorrow?.top3?.[2] || '';
+    document.getElementById('tomOne').value = review?.tomorrow?.onePercent || '';
+    document.getElementById('tomTrain').value = review?.tomorrow?.training || '';
+  }
+
+  function readForm(){
+    return {
+      date: todayISO,
+      todaySummary3Lines: [
+        document.getElementById('sum1').value.trim(),
+        document.getElementById('sum2').value.trim(),
+        document.getElementById('sum3').value.trim(),
+      ],
+      reflection: {
+        didWell: document.getElementById('didWell').value.trim(),
+        improveNext: document.getElementById('improveNext').value.trim(),
+      },
+      tomorrow: {
+        mit: document.getElementById('tomMit').value.trim(),
+        top3: [
+          document.getElementById('tomTop1').value.trim(),
+          document.getElementById('tomTop2').value.trim(),
+          document.getElementById('tomTop3').value.trim(),
+        ],
+        onePercent: document.getElementById('tomOne').value.trim(),
+        training: document.getElementById('tomTrain').value.trim(),
+      }
+    };
+  }
+
+  function generateTodayFromReview(review){
+    return {
+      date: todayISO,
+      outdoorCard: {
+        wear: '',
+        umbrella: '',
+        note: ''
+      },
+      news: {
+        hk: [], tech: [], world: []
+      },
+      actions: {
+        mit: review?.tomorrow?.mit || '',
+        top3: review?.tomorrow?.top3 || [],
+        onePercent: review?.tomorrow?.onePercent || '',
+        training: review?.tomorrow?.training || '',
+        notes: ''
+      }
+    };
+  }
+
+  // Boot: prefer backend state; fallback to localStorage
+  (async () => {
+    const state = await backendGet();
+    if(state && (state.todayPlanToday || state.eveningReviewLast)){
+      if(state.eveningReviewLast) setJSON(KEY_REVIEW, state.eveningReviewLast);
+      if(state.todayPlanToday) setJSON(KEY_TODAY, state.todayPlanToday);
+      renderToday(state.todayPlanToday || { date: todayISO, news: {hk:[],tech:[],world:[]}, actions:{top3:[]} });
+      document.getElementById('statusLine').innerHTML = '<span class="ok">已連接同步。</span>（用 backend 儲存）';
+    }else{
+      const plan = getJSON(KEY_TODAY, null) || { date: todayISO, news: {hk:[],tech:[],world:[]}, actions:{top3:[]} };
+      renderToday(plan);
+      document.getElementById('statusLine').innerHTML = '<span class="w">未連接同步。</span>（暫用本機 localStorage）';
+    }
+  })();
+
+  document.getElementById('btnLoad').addEventListener('click', async () => {
+    const state = await backendGet();
+    const review = state?.eveningReviewLast || getJSON(KEY_REVIEW, null);
+    fillForm(review);
+    document.getElementById('statusLine').textContent = review ? '已載入上次晚間Review。' : '未有任何晚間Review。';
+  });
+
+  document.getElementById('btnSave').addEventListener('click', async () => {
+    const review = readForm();
+    setJSON(KEY_REVIEW, review);
+    const today = generateTodayFromReview(review);
+    setJSON(KEY_TODAY, today);
+    renderToday(today);
+
+    const res = await backendSet({ eveningReviewLast: review, todayPlanToday: today });
+    document.getElementById('statusLine').innerHTML = res?.ok
+      ? '<span class="ok">已保存 + 已同步。</span> 明日一醒就會見到今日行動（MIT/Top3/1%/訓練）。'
+      : '<span class="w">已保存但未同步。</span>（只存 localStorage；檢查 server）';
+  });
+</script>
+</body>
+</html>

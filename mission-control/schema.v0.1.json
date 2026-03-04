@@ -1,0 +1,53 @@
+{
+  "name": "mission-control",
+  "version": "0.1",
+  "storage": {
+    "engine": "localStorage",
+    "keys": {
+      "settings": "mc:settings",
+      "eveningReview": "mc:eveningReview:last",
+      "todayPlan": "mc:todayPlan:today"
+    }
+  },
+  "settings": {
+    "location": "Hong Kong",
+    "timezone": "Asia/Hong_Kong",
+    "newsCategories": ["hk", "tech", "world"],
+    "newsItemsPerCategory": 3,
+    "umbrellaPolicy": "stable" 
+  },
+  "eveningReview": {
+    "date": "YYYY-MM-DD",
+    "todaySummary3Lines": ["", "", ""],
+    "reflection": {
+      "didWell": "",
+      "improveNext": ""
+    },
+    "tomorrow": {
+      "mit": "",
+      "top3": ["", "", ""],
+      "onePercent": "",
+      "training": ""
+    }
+  },
+  "todayPlan": {
+    "date": "YYYY-MM-DD",
+    "outdoorCard": {
+      "wear": "",
+      "umbrella": "",
+      "note": ""
+    },
+    "news": {
+      "hk": [{"title": "", "subtitle": ""}],
+      "tech": [{"title": "", "subtitle": ""}],
+      "world": [{"title": "", "subtitle": ""}]
+    },
+    "actions": {
+      "mit": "",
+      "top3": ["", "", ""],
+      "onePercent": "",
+      "training": "",
+      "notes": ""
+    }
+  }
+}
