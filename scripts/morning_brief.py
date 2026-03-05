@@ -191,14 +191,15 @@ def fmt_day(d: dt.datetime) -> str:
     return d.strftime("%-d/%-m")
 
 
-def get_reminders_today_overdue() -> Tuple[List[str], List[str]]:
+def get_reminders_today_overdue() -> Tuple[List[str], List[str], Optional[str]]:
     # Use `show all` to avoid remindctl's built-in filter timezone edge cases.
     raw = sh(["remindctl", "show", "all", "--list", LIST_NAME, "--json", "--no-input"], timeout=25)
     items = json.loads(raw)
     today = dt.datetime.now(TZ).date()
 
-    rows_today: List[Tuple[dt.datetime, str]] = []
-    rows_over: List[Tuple[dt.datetime, str]] = []
+    # Sort policy: high priority first, then time/date.
+    rows_today: List[Tuple[int, dt.datetime, str]] = []
+    rows_over: List[Tuple[int, dt.datetime, str]] = []
 
     for it in items:
         if it.get("isCompleted"):
@@ -216,20 +217,33 @@ def get_reminders_today_overdue() -> Tuple[List[str], List[str]]:
             continue
 
         pr = str(it.get("priority") or "none")
-        warn = " ⚠️" if pr in ("high", "1") else ""
+        is_high = 1 if pr in ("high", "1") else 0
+        warn = " ⚠️" if is_high else ""
 
         if due_dt.date() == today:
-            rows_today.append((due_dt, f"{title}（{fmt_time(due_dt)}）{warn}"))
+            rows_today.append((is_high, due_dt, f"{title}（{fmt_time(due_dt)}）{warn}"))
         elif due_dt.date() < today:
-            rows_over.append((due_dt, f"{title}（{fmt_day(due_dt)}）{warn}"))
+            rows_over.append((is_high, due_dt, f"{title}（{fmt_day(due_dt)}）{warn}"))
 
-    rows_today.sort(key=lambda x: x[0])
-    rows_over.sort(key=lambda x: x[0])
+    rows_today.sort(key=lambda x: (-x[0], x[1]))
+    rows_over.sort(key=lambda x: (-x[0], x[1]))
 
-    today_lines = [s for _, s in rows_today[:MAX_TODAY]]
-    over_lines = [s for _, s in rows_over[:MAX_OVERDUE]]
+    today_lines = [s for _, _, s in rows_today[:MAX_TODAY]]
+    over_lines = [s for _, _, s in rows_over[:MAX_OVERDUE]]
 
-    return today_lines, over_lines
+    urgent: Optional[str] = None
+    # Prefer overdue high priority, then today's high priority
+    for is_high, _, s in rows_over:
+        if is_high:
+            urgent = s
+            break
+    if urgent is None:
+        for is_high, _, s in rows_today:
+            if is_high:
+                urgent = s
+                break
+
+    return today_lines, over_lines, urgent
 
 
 def get_news() -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]], List[Tuple[str, str]]]:
@@ -258,7 +272,7 @@ def build_message() -> str:
     d = now.date()
 
     weather = get_weather()
-    today_lines, over_lines = get_reminders_today_overdue()
+    today_lines, over_lines, urgent = get_reminders_today_overdue()
     hk, world, tech = get_news()
 
     # Verses/quotes (keep stable, easy)
@@ -277,6 +291,8 @@ def build_message() -> str:
     lines.append(
         f"- 而家：{weather.now_temp:.1f}°C，{weather.now_text}，風約 {weather.wind_kmh:.1f} km/h"
     )
+    if urgent:
+        lines.append(f"🔔 優先提醒：{urgent}")
     lines.append("")
 
     lines.append("📋 今日要做（到期）")
