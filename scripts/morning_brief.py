@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Generate Luke's Morning Briefing (HK) as a single Telegram-friendly message.
+"""Generate and optionally send Luke's Morning Briefing (HK).
 
 Design goals:
 - Traditional Chinese (zh-Hant)
@@ -11,11 +11,16 @@ Design goals:
 - Local-first: uses Open-Meteo + RSS + remindctl
 
 Usage:
+  # Print only
   python3 morning_brief.py
+
+  # Send to Telegram via OpenClaw CLI (recommended for cron reliability)
+  python3 morning_brief.py --send --target 1626602099
 """
 
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import html
 import json
@@ -43,6 +48,9 @@ RSS_TECH = "https://hnrss.org/frontpage"
 MAX_NEWS = 3
 MAX_TODAY = 8
 MAX_OVERDUE = 6
+
+DEFAULT_TELEGRAM_TARGET = "1626602099"
+LAST_BRIEF_PATH = os.path.expanduser("~/.openclaw/workspace/memory/morning-brief-last.txt")
 
 
 def sh(cmd: List[str], timeout: int = 30) -> str:
@@ -112,70 +120,97 @@ def wmo_to_text(code: Optional[int]) -> str:
 
 @dataclass
 class WeatherCard:
-    now_temp: float
-    min_temp: float
-    max_temp: float
+    now_temp: Optional[float]
+    min_temp: Optional[float]
+    max_temp: Optional[float]
     now_text: str
-    wind_kmh: float
+    wind_kmh: Optional[float]
+    rain_prob_max: Optional[int]  # 0-100 (max in next hours)
     wear: str
     umbrella: str
 
 
 def get_weather() -> WeatherCard:
+    """Fetch HK weather. Never throw; returns best-effort card."""
+
     today = dt.datetime.now(TZ).date()
     url = (
         "https://api.open-meteo.com/v1/forecast"
         f"?latitude={LAT}&longitude={LON}"
-        "&hourly=temperature_2m,precipitation,weathercode,windspeed_10m"
-        "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
+        "&hourly=temperature_2m,precipitation_probability,weathercode,windspeed_10m"
+        "&daily=temperature_2m_max,temperature_2m_min"
         "&timezone=Asia%2FHong_Kong"
         f"&start_date={today.isoformat()}&end_date={today.isoformat()}"
     )
-    j = json.loads(fetch_bytes(url).decode("utf-8"))
 
-    now = dt.datetime.now(TZ)
-    h_times = [dt.datetime.fromisoformat(t).replace(tzinfo=TZ) for t in j["hourly"]["time"]]
-    idx = max(i for i, t in enumerate(h_times) if t <= now)
+    try:
+        j = json.loads(fetch_bytes(url).decode("utf-8"))
 
-    now_temp = float(j["hourly"]["temperature_2m"][idx])
-    now_wc = int(j["hourly"]["weathercode"][idx])
-    wind = float(j["hourly"]["windspeed_10m"][idx])
+        now = dt.datetime.now(TZ)
+        h_times = [dt.datetime.fromisoformat(t).replace(tzinfo=TZ) for t in j["hourly"]["time"]]
+        idx = max(i for i, t in enumerate(h_times) if t <= now)
 
-    dmax = float(j["daily"]["temperature_2m_max"][0])
-    dmin = float(j["daily"]["temperature_2m_min"][0])
-    dprec = float(j.get("daily", {}).get("precipitation_sum", [0.0])[0] or 0.0)
+        now_temp = float(j["hourly"]["temperature_2m"][idx])
+        now_wc = int(j["hourly"]["weathercode"][idx])
+        wind = float(j["hourly"]["windspeed_10m"][idx])
 
-    # next ~12h precipitation peak
-    prec = [float(x) for x in j["hourly"]["precipitation"]]
-    next_prec = max(prec[idx : min(idx + 13, len(prec))]) if prec else 0.0
+        dmax = float(j["daily"]["temperature_2m_max"][0])
+        dmin = float(j["daily"]["temperature_2m_min"][0])
 
-    # Wear heuristic (simple)
-    if dmax >= 25:
-        wear = "短袖"
-    elif dmax >= 21:
-        wear = "短袖 / 薄外套（早晚）"
-    elif dmax >= 18:
-        wear = "薄外套"
-    else:
-        wear = "外套"
+        probs = j["hourly"].get("precipitation_probability") or []
+        # Use next ~12h max probability
+        rain_prob_max: Optional[int] = None
+        if probs:
+            sl = probs[idx : min(idx + 13, len(probs))]
+            try:
+                rain_prob_max = int(max(float(x) for x in sl))
+            except Exception:
+                rain_prob_max = None
 
-    # Umbrella policy: stable but not paranoid
-    if dprec >= 1.0 or next_prec >= 0.3:
-        umbrella = "帶摺遮"
-    elif next_prec >= 0.1 or dprec >= 0.2:
-        umbrella = "建議帶摺遮（天氣唔穩）"
-    else:
-        umbrella = "可唔帶（想穩陣就帶摺遮）"
+        # Wear heuristic (simple)
+        if dmax >= 25:
+            wear = "短袖"
+        elif dmax >= 21:
+            wear = "短袖 / 薄外套（早晚）"
+        elif dmax >= 18:
+            wear = "薄外套"
+        else:
+            wear = "外套"
 
-    return WeatherCard(
-        now_temp=now_temp,
-        min_temp=dmin,
-        max_temp=dmax,
-        now_text=wmo_to_text(now_wc),
-        wind_kmh=wind,
-        wear=wear,
-        umbrella=umbrella,
-    )
+        # Umbrella policy (Luke): based on rain probability
+        umbrella: str
+        if rain_prob_max is None:
+            umbrella = "未能取得降雨機會：穩陣帶摺遮"
+        elif rain_prob_max >= 60:
+            umbrella = f"要拎遮（降雨機會 {rain_prob_max}%）"
+        elif rain_prob_max >= 30:
+            umbrella = f"建議帶摺遮（降雨機會 {rain_prob_max}%）"
+        else:
+            umbrella = f"唔駛拎遮（降雨機會 {rain_prob_max}%）"
+
+        return WeatherCard(
+            now_temp=now_temp,
+            min_temp=dmin,
+            max_temp=dmax,
+            now_text=wmo_to_text(now_wc),
+            wind_kmh=wind,
+            rain_prob_max=rain_prob_max,
+            wear=wear,
+            umbrella=umbrella,
+        )
+
+    except Exception:
+        # Fail-soft: still produce a usable suggestion
+        return WeatherCard(
+            now_temp=None,
+            min_temp=None,
+            max_temp=None,
+            now_text="（暫時拉唔到天氣）",
+            wind_kmh=None,
+            rain_prob_max=None,
+            wear="薄外套",
+            umbrella="未能取得降雨機會：穩陣帶摺遮",
+        )
 
 
 def parse_due(iso: str) -> dt.datetime:
@@ -286,11 +321,20 @@ def build_message() -> str:
     lines.append("")
 
     lines.append("🌤️ 出門卡（香港）")
-    lines.append(f"- 着衫：{weather.wear}（約 {weather.min_temp:.1f}–{weather.max_temp:.1f}°C）")
+    if weather.min_temp is not None and weather.max_temp is not None:
+        lines.append(f"- 着衫：{weather.wear}（約 {weather.min_temp:.1f}–{weather.max_temp:.1f}°C）")
+    else:
+        lines.append(f"- 着衫：{weather.wear}")
+
     lines.append(f"- 遮：{weather.umbrella}")
-    lines.append(
-        f"- 而家：{weather.now_temp:.1f}°C，{weather.now_text}，風約 {weather.wind_kmh:.1f} km/h"
-    )
+
+    if weather.now_temp is not None and weather.wind_kmh is not None:
+        lines.append(
+            f"- 而家：{weather.now_temp:.1f}°C，{weather.now_text}，風約 {weather.wind_kmh:.1f} km/h"
+        )
+    else:
+        lines.append(f"- 而家：{weather.now_text}")
+
     if urgent:
         lines.append(f"🔔 優先提醒：{urgent}")
     lines.append("")
@@ -353,12 +397,52 @@ def build_message() -> str:
     return "\n".join(lines).strip() + "\n"
 
 
-def main() -> int:
+def persist_last_brief(msg: str) -> None:
     try:
-        sys.stdout.write(build_message())
+        os.makedirs(os.path.dirname(LAST_BRIEF_PATH), exist_ok=True)
+        with open(LAST_BRIEF_PATH, "w", encoding="utf-8") as f:
+            f.write(msg)
+    except Exception:
+        pass
+
+
+def send_to_telegram(msg: str, target: str) -> None:
+    # Avoid shell quoting issues by using argv list.
+    subprocess.check_call(
+        [
+            "openclaw",
+            "message",
+            "send",
+            "--channel",
+            "telegram",
+            "--target",
+            str(target),
+            "--message",
+            msg,
+        ]
+    )
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--send", action="store_true", help="Send via OpenClaw to Telegram")
+    ap.add_argument("--target", default=DEFAULT_TELEGRAM_TARGET, help="Telegram chat id")
+    args = ap.parse_args()
+
+    try:
+        msg = build_message()
+        persist_last_brief(msg)
+
+        if args.send:
+            send_to_telegram(msg, args.target)
+            sys.stdout.write("SENT_OK\n")
+        else:
+            sys.stdout.write(msg)
+
         return 0
+
     except Exception as e:
-        sys.stdout.write("ERROR: Morning brief generation failed\n" + str(e) + "\n")
+        sys.stdout.write("ERROR: Morning brief failed\n" + str(e) + "\n")
         return 2
 
 
