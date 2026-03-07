@@ -41,9 +41,10 @@ LON = 114.15
 LIST_NAME = "Openclaw"
 
 # RSS sources (lightweight + usually accessible)
+# 目標：全部輸出繁體中文，所以世界/科技都用 Google News zh-Hant feeds。
 RSS_HK = "https://news.google.com/rss/search?q=%E9%A6%99%E6%B8%AF&hl=zh-HK&gl=HK&ceid=HK:zh-Hant"
-RSS_WORLD = "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en"
-RSS_TECH = "https://hnrss.org/frontpage"
+RSS_WORLD = "https://news.google.com/rss/search?q=%E5%9C%8B%E9%9A%9B&hl=zh-HK&gl=HK&ceid=HK:zh-Hant"
+RSS_TECH = "https://news.google.com/rss/search?q=%E7%A7%91%E6%8A%80%20OR%20AI&hl=zh-HK&gl=HK&ceid=HK:zh-Hant"
 
 MAX_NEWS = 3
 MAX_TODAY = 8
@@ -70,6 +71,24 @@ def strip_html(s: str) -> str:
     return s
 
 
+def clean_subtitle(s: str) -> str:
+    """Turn feed description into a single plain Chinese-friendly summary line.
+
+    Requirements:
+    - No URLs
+    - No "Article URL:" / "Comments URL:" noise
+    - Keep it short
+    """
+
+    s = strip_html(s or "")
+    # Remove common HN RSS noise
+    s = re.sub(r"\b(Article URL:|Comments URL:)\s*", "", s, flags=re.I)
+    # Remove URLs
+    s = re.sub(r"https?://\S+", "", s)
+    s = re.sub(r"\s+", " ", s).strip(" -–—\t\r\n")
+    return truncate(s, 80)
+
+
 def truncate(s: str, n: int = 90) -> str:
     s = (s or "").strip()
     if len(s) <= n:
@@ -84,9 +103,9 @@ def parse_rss(data: bytes, n: int = 3) -> List[Tuple[str, str]]:
     for it in items[:n]:
         title = (it.findtext("title") or "").strip()
         desc = (it.findtext("description") or "").strip()
-        desc = truncate(strip_html(desc), 96)
+        sub = clean_subtitle(desc)
         if title:
-            out.append((title, desc))
+            out.append((title, sub))
     return out
 
 
