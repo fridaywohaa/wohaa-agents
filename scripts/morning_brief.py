@@ -72,7 +72,7 @@ def strip_html(s: str) -> str:
 
 
 def clean_subtitle(s: str) -> str:
-    """Turn feed description into a single plain Chinese-friendly summary line.
+    """Turn feed description into a single plain summary line.
 
     Requirements:
     - No URLs
@@ -81,12 +81,77 @@ def clean_subtitle(s: str) -> str:
     """
 
     s = strip_html(s or "")
-    # Remove common HN RSS noise
     s = re.sub(r"\b(Article URL:|Comments URL:)\s*", "", s, flags=re.I)
-    # Remove URLs
     s = re.sub(r"https?://\S+", "", s)
     s = re.sub(r"\s+", " ", s).strip(" -–—\t\r\n")
     return truncate(s, 80)
+
+
+def clean_title(title: str) -> str:
+    """Remove noisy source suffix like ' - Yahoo' / domains from titles."""
+    t = (title or "").strip()
+    if " - " in t:
+        head, tail = t.rsplit(" - ", 1)
+        tail_l = tail.lower()
+        likely_source = (
+            len(tail) <= 40
+            and (
+                "." in tail
+                or any(
+                    k in tail_l
+                    for k in [
+                        "yahoo",
+                        "bbc",
+                        "cnn",
+                        "bloomberg",
+                        "reuters",
+                        "nytimes",
+                        "the new york times",
+                        "washington post",
+                        "cnbc",
+                        "hk01",
+                        "香港01",
+                        "orangenews",
+                        "hket",
+                        "信報",
+                        "香港電台",
+                        "文匯",
+                        "東網",
+                        "明報",
+                        "蘋果",
+                        "新聞網",
+                        "網站",
+                        "財經",
+                        "limited",
+                        "media",
+                    ]
+                )
+            )
+        )
+        if likely_source and head.strip():
+            t = head.strip()
+
+    # Also trim trailing ' - SOURCE' where SOURCE may include multiple dashes.
+    t = re.sub(r"\s+-\s+(LOOOP\s+MEDIA\s+LIMITED|LOOOP|MEDIA\s+LIMITED)\s*$", "", t, flags=re.I)
+    return t
+
+
+def norm_text(s: str) -> str:
+    s = (s or "").lower()
+    return re.sub(r"[^0-9a-z\u4e00-\u9fff]+", "", s)
+
+
+def is_subtitle_redundant(title: str, subtitle: str) -> bool:
+    from difflib import SequenceMatcher
+
+    a = norm_text(title)
+    b = norm_text(subtitle)
+    if not a or not b:
+        return True
+    if b in a or a in b:
+        return True
+    # similarity (robust to minor punctuation changes)
+    return SequenceMatcher(None, a, b).ratio() >= 0.78
 
 
 def truncate(s: str, n: int = 90) -> str:
@@ -101,11 +166,17 @@ def parse_rss(data: bytes, n: int = 3) -> List[Tuple[str, str]]:
     items = root.findall("./channel/item")
     out: List[Tuple[str, str]] = []
     for it in items[:n]:
-        title = (it.findtext("title") or "").strip()
+        raw_title = (it.findtext("title") or "").strip()
+        if not raw_title:
+            continue
+        title = clean_title(raw_title)
+
         desc = (it.findtext("description") or "").strip()
         sub = clean_subtitle(desc)
-        if title:
-            out.append((title, sub))
+        if is_subtitle_redundant(title, sub):
+            sub = ""
+
+        out.append((title, sub))
     return out
 
 
