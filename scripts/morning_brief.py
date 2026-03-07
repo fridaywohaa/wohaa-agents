@@ -446,7 +446,15 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--send", action="store_true", help="Send via OpenClaw to Telegram")
     ap.add_argument("--target", default=DEFAULT_TELEGRAM_TARGET, help="Telegram chat id")
+    ap.add_argument("--force-target", action="store_true", help="Allow sending to a non-default target")
     args = ap.parse_args()
+
+    # Safety: prevent accidental mis-delivery.
+    if args.send and (str(args.target) != str(DEFAULT_TELEGRAM_TARGET)) and not args.force_target:
+        raise SystemExit(
+            f"Refusing to send: target must be {DEFAULT_TELEGRAM_TARGET}. "
+            "(Use --force-target to override.)"
+        )
 
     try:
         msg = build_message()
