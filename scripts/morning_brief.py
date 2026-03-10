@@ -532,16 +532,51 @@ def missing_score(msg: str) -> int:
 
 
 def maybe_send_patch(target: str, first_msg: str) -> None:
-    """If first briefing had missing data, retry once later and send a patch automatically."""
-    if missing_score(first_msg) <= 0:
+    """Proactively retry until 08:00 if data was missing.
+
+    Policy (Luke):
+    - Keep retrying frequently within first 10 minutes.
+    - If still missing, retry with longer intervals until 08:00.
+    - Send patch only when content improves, avoid spam.
+    """
+    base_missing = missing_score(first_msg)
+    if base_missing <= 0:
         return
 
-    # wait a bit then retry once (user asked: try again proactively)
-    time.sleep(20)
-    second = build_message()
-    if missing_score(second) < missing_score(first_msg):
-        patch = "🔄 補充更新（剛剛重試成功）\n\n" + second
-        send_to_telegram(patch, target)
+    now = dt.datetime.now(TZ)
+    cutoff = now.replace(hour=8, minute=0, second=0, microsecond=0)
+    if now >= cutoff:
+        return
+
+    started = now
+    best_msg = first_msg
+    best_missing = base_missing
+
+    while dt.datetime.now(TZ) < cutoff and best_missing > 0:
+        elapsed = (dt.datetime.now(TZ) - started).total_seconds()
+
+        # within first 10 minutes: frequent retries; then slower retries
+        if elapsed < 10 * 60:
+            sleep_s = 90
+        else:
+            sleep_s = 10 * 60
+
+        # don't sleep past cutoff
+        remain = (cutoff - dt.datetime.now(TZ)).total_seconds()
+        if remain <= 0:
+            break
+        time.sleep(min(sleep_s, max(1, int(remain))))
+
+        candidate = build_message()
+        score = missing_score(candidate)
+        if score < best_missing:
+            best_missing = score
+            best_msg = candidate
+            patch = "🔄 補充更新（重試成功）\n\n" + best_msg
+            send_to_telegram(patch, target)
+
+        if best_missing <= 0:
+            break
 
 
 def main() -> int:
