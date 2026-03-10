@@ -29,6 +29,7 @@ import re
 import subprocess
 import sys
 import textwrap
+import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
@@ -58,10 +59,19 @@ def sh(cmd: List[str], timeout: int = 30) -> str:
     return subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=timeout, text=True)
 
 
-def fetch_bytes(url: str, timeout: int = 20) -> bytes:
-    req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urlopen(req, timeout=timeout) as r:
-        return r.read()
+def fetch_bytes(url: str, timeout: int = 20, retries: int = 2) -> bytes:
+    """Fetch URL with retry. retries=2 means total 3 attempts."""
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urlopen(req, timeout=timeout) as r:
+                return r.read()
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                time.sleep(1.2 * (attempt + 1))
+    raise last_err if last_err else RuntimeError("fetch failed")
 
 
 def strip_html(s: str) -> str:
@@ -513,6 +523,27 @@ def send_to_telegram(msg: str, target: str) -> None:
     )
 
 
+def missing_score(msg: str) -> int:
+    markers = [
+        "暫時拉唔到",
+        "未能取得降雨機會",
+    ]
+    return sum(msg.count(m) for m in markers)
+
+
+def maybe_send_patch(target: str, first_msg: str) -> None:
+    """If first briefing had missing data, retry once later and send a patch automatically."""
+    if missing_score(first_msg) <= 0:
+        return
+
+    # wait a bit then retry once (user asked: try again proactively)
+    time.sleep(20)
+    second = build_message()
+    if missing_score(second) < missing_score(first_msg):
+        patch = "🔄 補充更新（剛剛重試成功）\n\n" + second
+        send_to_telegram(patch, target)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--send", action="store_true", help="Send via OpenClaw to Telegram")
@@ -533,6 +564,7 @@ def main() -> int:
 
         if args.send:
             send_to_telegram(msg, args.target)
+            maybe_send_patch(args.target, msg)
             sys.stdout.write("SENT_OK\n")
         else:
             sys.stdout.write(msg)
