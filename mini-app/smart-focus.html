@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Smart Focus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            background: #0a0a0a;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #222;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .header .subtitle {
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .greeting {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .greeting-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        
+        .greeting-text strong {
+            color: #fff;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .card:hover {
+            border-color: #333;
+            transform: translateY(-2px);
+        }
+        
+        .card.completed {
+            opacity: 0.5;
+            border-color: #222;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .card-emoji {
+            font-size: 28px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .card-source {
+            font-size: 11px;
+            color: #555;
+            background: #1a1a1a;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        
+        .card-desc {
+            font-size: 14px;
+            color: #999;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        
+        .card-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #4a9eff;
+            font-size: 13px;
+        }
+        
+        .card-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: #1a1a1a;
+            color: #666;
+        }
+        
+        .tag.goal { background: #1a2a1a; color: #4ade80; }
+        .tag.learning { background: #1a1a2a; color: #a78bfa; }
+        .tag.reminder { background: #2a1a1a; color: #f87171; }
+        .tag.opportunity { background: #2a2a1a; color: #fbbf24; }
+        
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #111;
+            border-radius: 12px;
+            border: 1px solid #222;
+        }
+        
+        .stat {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #555;
+            margin-top: 2px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #555;
+        }
+        
+        .empty-state .emoji {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+        
+        .timestamp {
+            font-size: 11px;
+            color: #444;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .refresh-btn {
+            width: 100%;
+            padding: 14px;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 12px;
+            color: #888;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            background: #2a2a2a;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Smart Focus</h1>
+            <div class="subtitle">Based on your goals & conversation</div>
+        </div>
+        
+        <div class="greeting" id="greeting">
+            <div class="greeting-text" id="greetingText">Loading your personalized tasks...</div>
+        </div>
+        
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value" id="streak">0</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="completed">0</div>
+                <div class="stat-label">Done</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="skipped">0</div>
+                <div class="stat-label">Skipped</div>
+            </div>
+        </div>
+        
+        <div class="section-title">📌 Today's Tasks</div>
+        <div id="tasksContainer"></div>
+        
+        <button class="refresh-btn" onclick="refreshTasks()">🔄 Refresh Tasks</button>
+        
+        <div class="timestamp" id="timestamp"></div>
+    </div>
+
+    <script>
+        // User profile (auto-loaded from context)
+        const userProfile = {
+            name: "Luke",
+            goals: [
+                { id: "wohaa", name: "WOHAA Growth", emoji: "🤖", priority: "high" },
+                { id: "dlp", name: "DLP Studio", emoji: "💼", priority: "high" },
+                { id: "investment", name: "Investment", emoji: "💰", priority: "medium" },
+                { id: "smarthome", name: "Smart Home", emoji: "🏠", priority: "medium" },
+                { id: "arttoy", name: "Art Toy", emoji: "🎨", priority: "low" },
+                { id: "bevetu", name: "Bevetu CPO", emoji: "🐕", priority: "low" },
+                { id: "safety", name: "Financial Safety", emoji: "🔐", priority: "high" },
+                { id: "land", name: "HK Property", emoji: "🏢", priority: "low" }
+            ],
+            interests: ["AI", "Architecture", "Design", "Smart Home", "Investing", "Dogs"],
+            workStyle: "Direct, efficient, prefers local control",
+            concerns: ["2年內可能失業", "想搵backup income"]
+        };
+
+        // Task templates based on goals
+        // Updated: 2026-03-11 - Added CH340C/CC2652P coordinator tasks, land confidence display
+        // 2026-03-11 - Added ClawPal/OpenClaw v0.3.0 study, communication preference tasks
+        const taskTemplates = {
+            wohaa: [
+                { title: "優化OpenClaw技能", desc: "你有提到想我變得更progressive，整一個新skill?", action: "諗下想學咩新技能", tags: ["goal", "learning"] },
+                { title: "檢查系統狀態", desc: "睇下OpenClaw version同有冇新features", action: "Run openclaw status", tags: ["reminder"] },
+                { title: "Morning Brief優化", desc: "你既Morning Brief系統最近有更新，改進啲咩?", action: "Review morning brief", tags: ["goal"] },
+                { title: "改善自動化", desc: "你提過想改善morning brief流程", action: "睇下可以點改進", tags: ["goal"] },
+                { title: "學新工具", desc: "Research一樣新既AI tools可以幫到你", action: "Search for new AI tools", tags: ["learning"] },
+                { title: "Cron Job優化", desc: "你有cron jobs，檢查下既schedules?", action: "Review cron jobs", tags: ["reminder"] },
+                { title: "ClawPal Study", desc: "你想學OpenClaw v0.3.0同ClawPal desktop app，用黎做「Claws Help Claws」?", action: "Study ClawPal features", tags: ["goal", "learning"] },
+                { title: "簡潔溝通", desc: "你偏好短reply (1-3行)、結論先行，試下用呢個style?", action: "Practice concise replies", tags: ["learning"] }
+            ],
+            dlp: [
+                { title: "Portfolio Update", desc: "你既DLP Portfolio 3日冇update喇", action: "Update project status", tags: ["reminder"] },
+                { title: "Cold Outreach", desc: "你話想搵多啲客，試下cold email?", action: "Write 3 cold emails", tags: ["goal", "opportunity"] },
+                { title: "Website Review", desc: "你既website可能需要update", action: "Check DLP website", tags: ["reminder"] },
+                { title: "舊客聯繫", desc: "聯繫一個舊客問下有冇新項目", action: "Message old client", tags: ["opportunity"] }
+            ],
+            investment: [
+                { title: "Portfolio Check", desc: "TQQQ最近波動，睇下你既position", action: "Check current prices", tags: ["reminder"] },
+                { title: "Trade Journal", desc: "記錄你既trade decisions同reasons", action: "Write trade notes", tags: ["learning"] },
+                { title: "Risk Review", desc: "你提到concerned about leveraged ETF decay", action: "Review risk management", tags: ["goal"] },
+                { title: "Research", desc: "睇下有冇新既investment ideas", action: "Read market news", tags: ["learning"] }
+            ],
+            smarthome: [
+                { title: "ZHA Setup", desc: "你有CC2652P coordinator，setup ZHA integration?", action: "Check ZHA integration", tags: ["goal"] },
+                { title: "CH340C Coordinator", desc: "你既CC2652P用CH340C chip，確認/dev/ttyUSB0 connection", action: "Verify USB serial connection", tags: ["goal", "reminder"] },
+                { title: "Powered USB Hub", desc: "CH340C coordinator需要powered hub防止干擾，research下邊隻好?", action: "Research powered USB hubs", tags: ["learning"] },
+                { title: "Interference Spacing", desc: "USB device擺放要避免干擾，check下你既setup", action: "Check device placement", tags: ["learning"] },
+                { title: "HA Automation", desc: "你有HA setup，整一個新automation?", action: "Create new automation", tags: ["goal", "learning"] },
+                { title: "Dashboard Update", desc: "你既dashboard可以加新widget", action: "Add widget", tags: ["reminder"] },
+                { title: "Voice Command Test", desc: "Test下你既voice commands", action: "Try a command", tags: ["reminder"] },
+                { title: "New Device", desc: "研究下可以加入既新智能設備", action: "Research devices", tags: ["learning"] },
+                { title: "HA Backup", desc: "你既HA用Docker整，setting up backup?", action: "Configure HA backup", tags: ["goal", "reminder"] },
+                { title: "Tailscale Access", desc: "Remote access你既HA via Tailscale", action: "Check Tailscale connection", tags: ["reminder"] }
+            ],
+            land: [
+                { title: "Property Research", desc: "你有`/land` command可以查香港樓", action: "Try /land command", tags: ["learning"] },
+                { title: "Confidence Score", desc: "你既`/land`有confidence display，理解下?", action: "Learn confidence metrics", tags: ["learning"] },
+                { title: "Address Parser", desc: "試下用`/land <address>`睇下parser效果", action: "Test address parsing", tags: ["learning"] },
+                { title: "District Analysis", desc: "睇下某區既樓價趨勢", action: "Analyze district data", tags: ["learning"] },
+                { title: "MVP Features", desc: "你既`/land` MVP係auto-identification，test下?", action: "Test auto-ID feature", tags: ["goal", "learning"] }
+            ],
+            arttoy: [
+                { title: "Character Development", desc: "你有2個characters，develop多啲?", action: "Sketch new design", tags: ["goal", "learning"] },
+                { title: "Market Research", desc: "睇下art toy market trends", action: "Research trends", tags: ["learning"] },
+                { title: "Branding", desc: "Develop你既art toy brand story", action: "Write brand story", tags: ["goal"] },
+                { title: "AI Enhancement", desc: "用AI幫手改進你既characters", action: "Try AI sketch tools", tags: ["learning"] }
+            ],
+            bevetu: [
+                { title: "CPO Review", desc: "Bevetu寵物健康App 你係CPO，檢查下进度?", action: "Check app status", tags: ["reminder"] },
+                { title: "Branding Focus", desc: "團隊唔積極，你focus係branding/marketing?", action: "Develop marketing plan", tags: ["goal", "opportunity"] },
+                { title: "Minimal Investment", desc: "你話最少投入，check下current spend", action: "Review investment", tags: ["reminder"] },
+                { title: "User Research", desc: "研究下寵物健康app既user needs", action: "Research user personas", tags: ["learning"] }
+            ],
+            safety: [
+                { title: "Backup Plan", desc: "你提到2年內可能冇工，update你既backup plan", action: "Review backup plan", tags: ["goal", "reminder"] },
+                { title: "Skills Monetization", desc: "諗下點用你既skills搵錢", action: "List monetizable skills", tags: ["goal", "opportunity"] },
+                { title: "Emergency Fund", desc: "Check你既儲蓄/緊急基金", action: "Review savings", tags: ["reminder"] },
+                { title: "Freelance Opportunities", desc: "搵下freelance/consulting機會", action: "Search opportunities", tags: ["opportunity"] },
+                { title: "工作模式回顧", desc: "你既工作模式: plan→wait approval→execute→report→persist", action: "Review workflow", tags: ["learning"] }
+            ]
+        };
+
+        // Context-aware greetings
+        const greetings = [
+            "你有提到想<strong>{goal}</strong>，不如今日focus呢方面？",
+            "記得你想做<strong>{goal}</strong>？幾好喎！",
+            "基於你既goals，我建議你今日試<strong>{goal}</strong>",
+            "你既<strong>{goal}</strong>進展點樣？有嘢我可以幫手？"
+        ];
+
+        let currentTasks = [];
+        
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function loadStats() {
+            const streak = localStorage.getItem('smartStreak') || 0;
+            const completed = localStorage.getItem('smartCompleted') || 0;
+            const skipped = localStorage.getItem('smartSkipped') || 0;
+            
+            document.getElementById('streak').textContent = streak;
+            document.getElementById('completed').textContent = completed;
+            document.getElementById('skipped').textContent = skipped;
+            
+            // Check streak
+            const lastDate = localStorage.getItem('smartLastDate');
+            const today = new Date().toDateString();
+            if (lastDate !== today) {
+                // Reset daily
+            }
+        }
+
+        function generateGreeting() {
+            const highPriorityGoals = userProfile.goals.filter(g => g.priority === 'high');
+            const randomGoal = getRandomItem(highPriorityGoals);
+            const template = getRandomItem(greetings);
+            
+            const greeting = template.replace('{goal}', randomGoal.name);
+            document.getElementById('greetingText').innerHTML = greeting;
+        }
+
+        function generateTasks() {
+            currentTasks = [];
+            
+            // Get user's priority goals
+            const priorityGoals = userProfile.goals.filter(g => g.priority === 'high');
+            const otherGoals = userProfile.goals.filter(g => g.priority !== 'high');
+            
+            // Shuffle
+            const shuffledGoals = [...priorityGoals, ...otherGoals].sort(() => Math.random() - 0.5);
+            
+            // Generate 4-6 tasks from different goals
+            let usedGoals = new Set();
+            let taskCount = 4 + Math.floor(Math.random() * 3); // 4-6 tasks
+            
+            for (let i = 0; i < taskCount; i++) {
+                const goal = shuffledGoals[i % shuffledGoals.length];
+                const templates = taskTemplates[goal.id];
+                if (templates) {
+                    const task = getRandomItem(templates);
+                    currentTasks.push({
+                        ...task,
+                        goalId: goal.id,
+                        goalEmoji: goal.emoji,
+                        goalName: goal.name,
+                        id: `${goal.id}_${i}`
+                    });
+                }
+            }
+            
+            // Shuffle tasks
+            currentTasks.sort(() => Math.random() - 0.5);
+            
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasksContainer');
+            
+            if (currentTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="emoji">✨</div>
+                        <div>No tasks right now</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = currentTasks.map((task, index) => `
+                <div class="card" id="task_${task.id}" onclick="completeTask('${task.id}')">
+                    <div class="card-header">
+                        <span class="card-emoji">${task.goalEmoji}</span>
+                        <span class="card-title">${task.title}</span>
+                        <span class="card-source">${task.goalName}</span>
+                    </div>
+                    <div class="card-desc">${task.desc}</div>
+                    <div class="card-action">
+                        <span>→</span> ${task.action}
+                    </div>
+                    <div class="card-tags" style="margin-top: 12px;">
+                        ${task.tags.map(tag => `<span class="tag ${tag}">${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
+            // Update timestamp
+            document.getElementById('timestamp').textContent = 
+                `Last updated: ${new Date().toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        function completeTask(taskId) {
+            const card = document.getElementById(`task_${taskId}`);
+            if (card.classList.contains('completed')) {
+                // Skip
+                card.classList.remove('completed');
+                let skipped = parseInt(localStorage.getItem('smartSkipped') || '0');
+                localStorage.setItem('smartSkipped', skipped + 1);
+            } else {
+                // Complete
+                card.classList.add('completed');
+                let completed = parseInt(localStorage.getItem('smartCompleted') || '0');
+                localStorage.setItem('smartCompleted', completed + 1);
+                
+                // Update streak
+                const today = new Date().toDateString();
+                const lastDate = localStorage.getItem('smartLastDate');
+                if (lastDate !== today) {
+                    let streak = parseInt(localStorage.getItem('smartStreak') || '0');
+                    localStorage.setItem('smartStreak', streak + 1);
+                    localStorage.setItem('smartLastDate', today);
+                }
+            }
+            
+            loadStats();
+        }
+
+        function refreshTasks() {
+            generateTasks();
+            generateGreeting();
+        }
+
+        // Initialize
+        loadStats();
+        generateGreeting();
+        generateTasks();
+    </script>
+</body>
+</html>
