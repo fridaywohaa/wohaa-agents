@@ -266,18 +266,24 @@
         };
 
         // Task templates based on goals
-        // Updated: 2026-03-11 - Added CH340C/CC2652P coordinator tasks, land confidence display
+        // Updated: 2026-03-12 (Auto-Learn check) - No new insights found, templates already current
+// 2026-03-12 - Added Morning Brief reliability tasks, umbrella decision threshold
+        // 2026-03-11 - Added CH340C/CC2652P coordinator tasks, land confidence display
         // 2026-03-11 - Added ClawPal/OpenClaw v0.3.0 study, communication preference tasks
+        // 2026-03-11 - Added working style workflow task (plan→wait→execute→report→persist)
         const taskTemplates = {
             wohaa: [
                 { title: "優化OpenClaw技能", desc: "你有提到想我變得更progressive，整一個新skill?", action: "諗下想學咩新技能", tags: ["goal", "learning"] },
                 { title: "檢查系統狀態", desc: "睇下OpenClaw version同有冇新features", action: "Run openclaw status", tags: ["reminder"] },
                 { title: "Morning Brief優化", desc: "你既Morning Brief系統最近有更新，改進啲咩?", action: "Review morning brief", tags: ["goal"] },
+                { title: "Morning Brief Retry Logic", desc: "Weather/news fetch retries (up to 3), fail-soft output, 7-8am retry window", action: "Review retry mechanism", tags: ["goal", "learning"] },
+                { title: "Target Safety Guard", desc: "Morning Brief sender refuses non-default target unless overridden", action: "Verify target validation", tags: ["reminder"] },
                 { title: "改善自動化", desc: "你提過想改善morning brief流程", action: "睇下可以點改進", tags: ["goal"] },
                 { title: "學新工具", desc: "Research一樣新既AI tools可以幫到你", action: "Search for new AI tools", tags: ["learning"] },
                 { title: "Cron Job優化", desc: "你有cron jobs，檢查下既schedules?", action: "Review cron jobs", tags: ["reminder"] },
                 { title: "ClawPal Study", desc: "你想學OpenClaw v0.3.0同ClawPal desktop app，用黎做「Claws Help Claws」?", action: "Study ClawPal features", tags: ["goal", "learning"] },
-                { title: "簡潔溝通", desc: "你偏好短reply (1-3行)、結論先行，試下用呢個style?", action: "Practice concise replies", tags: ["learning"] }
+                { title: "簡潔溝通", desc: "你偏好短reply (1-3行)、結論先行，試下用呢個style?", action: "Practice concise replies", tags: ["learning"] },
+                { title: "工作流程", desc: "你既工作模式: plan→wait approval→execute→report→persist", action: "Apply workflow to current task", tags: ["goal", "learning"] }
             ],
             dlp: [
                 { title: "Portfolio Update", desc: "你既DLP Portfolio 3日冇update喇", action: "Update project status", tags: ["reminder"] },
@@ -296,6 +302,7 @@
                 { title: "CH340C Coordinator", desc: "你既CC2652P用CH340C chip，確認/dev/ttyUSB0 connection", action: "Verify USB serial connection", tags: ["goal", "reminder"] },
                 { title: "Powered USB Hub", desc: "CH340C coordinator需要powered hub防止干擾，research下邊隻好?", action: "Research powered USB hubs", tags: ["learning"] },
                 { title: "Interference Spacing", desc: "USB device擺放要避免干擾，check下你既setup", action: "Check device placement", tags: ["learning"] },
+                { title: "Umbrella Decision Logic", desc: "Rain probability: <30% no umbrella, 30-59% suggest, >=60% must bring", action: "Review umbrella thresholds", tags: ["learning", "reminder"] },
                 { title: "HA Automation", desc: "你有HA setup，整一個新automation?", action: "Create new automation", tags: ["goal", "learning"] },
                 { title: "Dashboard Update", desc: "你既dashboard可以加新widget", action: "Add widget", tags: ["reminder"] },
                 { title: "Voice Command Test", desc: "Test下你既voice commands", action: "Try a command", tags: ["reminder"] },
