@@ -326,6 +326,13 @@ def fmt_day(d: dt.datetime) -> str:
     return d.strftime("%-d/%-m")
 
 
+# Routine tasks to hide from Morning Brief (Luke's preference: daily chores not worth mentioning)
+ROUTINE_TASKS = {
+    "叮飯", "拎蛋", "洗碗", "加水", "補充劑", "supplement", "Meal", "食蕉",
+    "tn+tmr", "刷牙", "沖涼", "換衫", "倒垃圾", "洗手間", "起身", "瞓覺",
+}
+
+
 def get_reminders_today_overdue() -> Tuple[List[str], List[str], Optional[str]]:
     # Use `show all` to avoid remindctl's built-in filter timezone edge cases.
     raw = sh(["remindctl", "show", "all", "--list", LIST_NAME, "--json", "--no-input"], timeout=25)
@@ -349,6 +356,10 @@ def get_reminders_today_overdue() -> Tuple[List[str], List[str], Optional[str]]:
 
         title = (it.get("title") or "").strip()
         if not title:
+            continue
+
+        # Filter out routine daily chores (Luke's preference)
+        if any(rt.lower() in title.lower() for rt in ROUTINE_TASKS):
             continue
 
         pr = str(it.get("priority") or "none")
