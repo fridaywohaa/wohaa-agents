@@ -327,6 +327,7 @@ def fmt_day(d: dt.datetime) -> str:
 
 
 # Routine tasks to hide from Morning Brief (Luke's preference: daily chores not worth mentioning)
+# NOTE: Ask Luke first before adding new tasks to this list!
 ROUTINE_TASKS = {
     "叮飯", "拎蛋", "洗碗", "加水", "補充劑", "supplement", "Meal", "食蕉",
     "tn+tmr", "刷牙", "沖涼", "換衫", "倒垃圾", "洗手間", "起身", "瞓覺",
