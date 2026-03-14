@@ -266,13 +266,16 @@
         };
 
         // Task templates based on goals
-        // Updated: 2026-03-13 08:07 (Hourly Cron) - Reviewed Mar 11-12 memory: no new goals found. Mar 10 items already in templates.
+        // Updated: 2026-03-14 12:58 (Hourly Cron) - Added Calendar SQLite sync bypass task, AppleScript timeout issue
+        // 2026-03-13 16:03 (Hourly Cron) - Added local delivery preference, Apple Calendar fix priority, location-aware reminders
+// 2026-03-13 08:07 (Hourly Cron) - Reviewed Mar 11-12 memory: no new goals found. Mar 10 items already in templates.
 // 2026-03-12 - Added Morning Brief reliability tasks, umbrella decision threshold
         // 2026-03-11 - Added CH340C/CC2652P coordinator tasks, land confidence display
         // 2026-03-11 - Added ClawPal/OpenClaw v0.3.0 study, communication preference tasks
         // 2026-03-11 - Added working style workflow task (plan→wait→execute→report→persist)
         const taskTemplates = {
             wohaa: [
+                { title: "本地交付優先", desc: "你prefer localhost + Tailscale links，default唔推GitHub除非你想要", action: "Confirm local delivery default", tags: ["goal", "reminder"] },
                 { title: "優化OpenClaw技能", desc: "你有提到想我變得更progressive，整一個新skill?", action: "諗下想學咩新技能", tags: ["goal", "learning"] },
                 { title: "檢查系統狀態", desc: "睇下OpenClaw version同有冇新features", action: "Run openclaw status", tags: ["reminder"] },
                 { title: "Morning Brief優化", desc: "你既Morning Brief系統最近有更新，改進啲咩?", action: "Review morning brief", tags: ["goal"] },
@@ -298,6 +301,9 @@
                 { title: "Research", desc: "睇下有冇新既investment ideas", action: "Read market news", tags: ["learning"] }
             ],
             smarthome: [
+                { title: "Apple Calendar Sync Issue", desc: "Direct SQLite writes to Calendar.sqlitedb bypass sync - rows don't appear in Calendar.app. AppleScript writes freeze/timeout.", action: "Investigate alternative calendar sync methods", tags: ["goal", "reminder"] },
+                { title: "Apple Calendar Write Fix", desc: "Priority: 修復Calendar寫入workflow (direct SQLite bypass sync, AppleScript timeout)", action: "Investigate calendar write solutions", tags: ["goal", "reminder"] },
+                { title: "Location Reminders", desc: "你interest in location-based reminders via Mac mini/Find My/Family Sharing", action: "Research location detection options", tags: ["learning", "opportunity"] },
                 { title: "ZHA Setup", desc: "你有CC2652P coordinator，setup ZHA integration?", action: "Check ZHA integration", tags: ["goal"] },
                 { title: "CH340C Coordinator", desc: "你既CC2652P用CH340C chip，確認/dev/ttyUSB0 connection", action: "Verify USB serial connection", tags: ["goal", "reminder"] },
                 { title: "Powered USB Hub", desc: "CH340C coordinator需要powered hub防止干擾，research下邊隻好?", action: "Research powered USB hubs", tags: ["learning"] },
