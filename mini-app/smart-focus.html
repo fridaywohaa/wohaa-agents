@@ -258,7 +258,9 @@
                 { id: "arttoy", name: "Art Toy", emoji: "🎨", priority: "low" },
                 { id: "bevetu", name: "Bevetu CPO", emoji: "🐕", priority: "low" },
                 { id: "safety", name: "Financial Safety", emoji: "🔐", priority: "high" },
-                { id: "land", name: "HK Property", emoji: "🏢", priority: "low" }
+                { id: "land", name: "HK Property", emoji: "🏢", priority: "low" },
+                { id: "health", name: "Health & Fitness", emoji: "💪", priority: "high" },
+                { id: "learning", name: "Reading & Growth", emoji: "📚", priority: "medium" }
             ],
             interests: ["AI", "Architecture", "Design", "Smart Home", "Investing", "Dogs"],
             workStyle: "Direct, efficient, prefers local control",
@@ -266,7 +268,8 @@
         };
 
         // Task templates based on goals
-        // Updated: 2026-03-15 04:05 (Hourly Cron) - Reviewed Mar 14-15 memory: no new goals found. Last conversation about goals was Mar 13.
+        // Updated: 2026-03-15 20:03 (Hourly Cron) - Reviewed Mar 14-15 memory: no new goals found. Only AI trend Discord posts detected.
+// 2026-03-15 17:43 (Hourly Cron) - Reviewed Mar 14-15 memory: no new goals found. Only AI trend Discord posts detected.
 // 2026-03-14 21:00 (Evening Cron) - No new goals today. Last conversation was Mar 13.
 // 2026-03-14 13:05 (Morning Cron) - Added location-aware reminders, Apple Calendar write priority
         // 2026-03-14 12:58 (Hourly Cron) - Added Calendar SQLite sync bypass task, AppleScript timeout issue
@@ -344,6 +347,24 @@
                 { title: "Emergency Fund", desc: "Check你既儲蓄/緊急基金", action: "Review savings", tags: ["reminder"] },
                 { title: "Freelance Opportunities", desc: "搵下freelance/consulting機會", action: "Search opportunities", tags: ["opportunity"] },
                 { title: "工作模式回顧", desc: "你既工作模式: plan→wait approval→execute→report→persist", action: "Review workflow", tags: ["learning"] }
+            ],
+            health: [
+                { title: "體脂降至15%", desc: "你既第一階段目標係體脂減到15%，check下progress?", action: "Log current body fat %", tags: ["goal", "reminder"] },
+                { title: "6點起身計劃", desc: "你目標每日6點前起身，建立 consistent routine", action: "Set alarm for 5:30am", tags: ["goal", "reminder"] },
+                { title: "確保7小時睡眠", desc: "你既目標係瞓夠7個鐘，check下尋晚訓咗幾耐?", action: "Review sleep hours", tags: ["goal", "reminder"] },
+                { title: "健身 Schedule", desc: "你有提到健身為左減體脂，整一個weekly schedule?", action: "Plan workout week", tags: ["goal", "learning"] },
+                { title: "今日運動", desc: "記得今日要做運動!", action: "Log workout", tags: ["reminder"] },
+                { title: "Nutrition Check", desc: "減體脂要控制飲食，check下今日既nutrition?", action: "Log meals", tags: ["learning"] }
+            ],
+            learning: [
+                { title: "每月一本書", desc: "你既目標係每月起碼閱讀一本新書，今個月讀緊咩?", action: "Check current book", tags: ["goal", "reminder"] },
+                { title: "閱讀進度", desc: "記錄你既閱讀進度同筆記", action: "Log reading notes", tags: ["learning"] },
+                { title: "Book Recommendation", desc: "搵下下個月既書單，有咩想學?", action: "Search for books", tags: ["learning", "opportunity"] },
+                { title: "今日Urgent Tasks", desc: "Chatgpt to Oneal $162（12:00am）| 0005｜Draft minute（10:00am）| 0005｜Draft mood boards + Elevation（4:00pm）", action: "Check today's deadlines", tags: ["reminder"] },
+                { title: "DLP Studio 空間設計", desc: "你想做真正既空間設計公司，研究下?", action: "Research space design", tags: ["goal", "learning"] },
+                { title: "Kanban 自動化", desc: "Set up 呢個 Kanban system 既自動化", action: "Setup automation", tags: ["goal", "learning"] },
+                { title: "AI Blog Post", desc: "寫一篇關於 AI 助手的 blog post", action: "Draft blog content", tags: ["goal", "learning"] },
+                { title: "TQQQ Analysis", desc: "研究下好似 TQQQ 既 leveraged ETF", action: "Research leveraged ETFs", tags: ["goal", "learning"] }
             ]
         };
 
