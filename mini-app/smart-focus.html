@@ -268,7 +268,9 @@
         };
 
         // Task templates based on goals
-        // Updated: 2026-03-15 20:03 (Hourly Cron) - Reviewed Mar 14-15 memory: no new goals found. Only AI trend Discord posts detected.
+        // Updated: 2026-03-16 12:05 (Hourly Cron) - Reviewed Mar 15-16 memory: no new goals found. Only AI trend Discord posts detected.
+        // Updated: 2026-03-16 08:04 (Morning Cron) - Added investment strategy signal generator tasks, WOHAA agent coordination, trading risk management
+// 2026-03-16 00:08 (Hourly Cron) - Reviewed Mar 14-15 memory: no new goals found. Only AI trend Discord posts detected.
 // 2026-03-15 17:43 (Hourly Cron) - Reviewed Mar 14-15 memory: no new goals found. Only AI trend Discord posts detected.
 // 2026-03-14 21:00 (Evening Cron) - No new goals today. Last conversation was Mar 13.
 // 2026-03-14 13:05 (Morning Cron) - Added location-aware reminders, Apple Calendar write priority
@@ -281,6 +283,10 @@
         // 2026-03-11 - Added working style workflow task (plan→wait→execute→report→persist)
         const taskTemplates = {
             wohaa: [
+                { title: "Agent Coordination", desc: "你有3個sub-agents: Researcher, Writer, Notifier。用sessions_spawn調度佢哋", action: "Test sub-agent spawn", tags: ["goal", "learning"] },
+                { title: "Research Agent", desc: "Research Agent幫你研究topics/news/trends，輸入格式: /research <keyword>", action: "Try /research command", tags: ["goal", "learning"] },
+                { title: "Writer Agent", desc: "Writer Agent幫你draft emails/messages，輸入格式: /write <topic>", action: "Try /write command", tags: ["goal", "learning"] },
+                { title: "Notifier Agent", desc: "Notifier Agent幫你scheduled messages同alerts", action: "Try /notify command", tags: ["goal", "learning"] },
                 { title: "本地交付優先", desc: "你prefer localhost + Tailscale links，default唔推GitHub除非你想要", action: "Confirm local delivery default", tags: ["goal", "reminder"] },
                 { title: "優化OpenClaw技能", desc: "你有提到想我變得更progressive，整一個新skill?", action: "諗下想學咩新技能", tags: ["goal", "learning"] },
                 { title: "檢查系統狀態", desc: "睇下OpenClaw version同有冇新features", action: "Run openclaw status", tags: ["reminder"] },
@@ -301,6 +307,13 @@
                 { title: "舊客聯繫", desc: "聯繫一個舊客問下有冇新項目", action: "Message old client", tags: ["opportunity"] }
             ],
             investment: [
+                { title: "Strategy Signal Generator", desc: "Build minimum script: output daily TQQQ position (0/25/50/75/100%) + reason + audit trail", action: "Write Python script for signal generation", tags: ["goal", "learning"] },
+                { title: "200日線趨勢跟隨", desc: "用200日移動平均線判斷趨勢，只在上升趨勢持有TQQQ", action: "Implement trend following logic", tags: ["goal", "learning"] },
+                { title: "波動率倉位計算", desc: "以30日波動率決定倉位比例，波動越大倉位越細", action: "Code volatility-based sizing", tags: ["goal", "learning"] },
+                { title: "Max Drawdown Protection", desc: "設定組合高位回撤達標即減倉至現金，啟動冷卻期", action: "Implement drawdown protection", tags: ["goal", "reminder"] },
+                { title: "Broker Safeguards", desc: "IB設定單筆/總值上限，超出要二次確認", action: "Configure IB preventive settings", tags: ["goal", "reminder"] },
+                { title: "Daily Loss Stop", desc: "日內累計虧損達X%即停機，呢個係風控底線", action: "Set daily loss threshold", tags: ["goal", "reminder"] },
+                { title: "Alpaca vs IB Decision", desc: "你選擇Alpaca模擬定IB但只出訊號唔落單？", action: "Confirm broker choice", tags: ["goal", "reminder"] },
                 { title: "Portfolio Check", desc: "TQQQ最近波動，睇下你既position", action: "Check current prices", tags: ["reminder"] },
                 { title: "Trade Journal", desc: "記錄你既trade decisions同reasons", action: "Write trade notes", tags: ["learning"] },
                 { title: "Risk Review", desc: "你提到concerned about leveraged ETF decay", action: "Review risk management", tags: ["goal"] },
