@@ -268,8 +268,8 @@
         };
 
         // Task templates based on goals
+        // Updated: 2026-03-17 16:04 (Hourly Cron) - Reviewed Mar 15-17 memory: no new goals found. Only AI trend Discord posts detected.
         // Updated: 2026-03-17 00:04 (Hourly Cron) - Reviewed Mar 15-16 memory: no new goals found.
-// Updated: 2026-03-16 21:00 (Evening Cron) - No new goals found today. Only AI trends Discord post at 8PM.
 // Updated: 2026-03-16 20:03 (Hourly Cron) - Reviewed Mar 15-16 memory: no new goals found. Only AI trend Discord posts detected.
 // Updated: 2026-03-16 12:05 (Hourly Cron) - Reviewed Mar 15-16 memory: no new goals found. Only AI trend Discord posts detected.
         // Updated: 2026-03-16 08:04 (Morning Cron) - Added investment strategy signal generator tasks, WOHAA agent coordination, trading risk management
@@ -377,6 +377,11 @@
                 { title: "閱讀進度", desc: "記錄你既閱讀進度同筆記", action: "Log reading notes", tags: ["learning"] },
                 { title: "Book Recommendation", desc: "搵下下個月既書單，有咩想學?", action: "Search for books", tags: ["learning", "opportunity"] },
                 { title: "今日Urgent Tasks", desc: "Chatgpt to Oneal $162（12:00am）| 0005｜Draft minute（10:00am）| 0005｜Draft mood boards + Elevation（4:00pm）", action: "Check today's deadlines", tags: ["reminder"] },
+                { title: "Fix Gmail Token", desc: "Gmail token過期咗（14/3），盡快fix佢", action: "Run gog auth check", tags: ["reminder", "urgent"] },
+                { title: "退錢 & 回鄉咭", desc: "呢樣嘢14/3已經過咗期，要盡快搞", action: "處理退款同回鄉咭", tags: ["reminder", "urgent"] },
+                { title: "0005 Draft Minute", desc: "15/3既draft minute未完成", action: "Write meeting minutes", tags: ["reminder", "urgent"] },
+                { title: "0005 Draft Mood Boards", desc: "15/3既mood boards + Elevation未完成", action: "Design mood boards", tags: ["reminder", "urgent"] },
+                { title: "Update Cash & Credit Data", desc: "16/3既數據未update", action: "Update financial records", tags: ["reminder"] },
                 { title: "DLP Studio 空間設計", desc: "你想做真正既空間設計公司，研究下?", action: "Research space design", tags: ["goal", "learning"] },
                 { title: "Kanban 自動化", desc: "Set up 呢個 Kanban system 既自動化", action: "Setup automation", tags: ["goal", "learning"] },
                 { title: "AI Blog Post", desc: "寫一篇關於 AI 助手的 blog post", action: "Draft blog content", tags: ["goal", "learning"] },
